@@ -1,0 +1,188 @@
+#include <math.h>
+int pwm1=3;
+int dir1=4;
+int pwm2=5;
+int dir2=2;   //to motor driver 
+
+#define CH1 10
+#define CH2 6
+#define CH4 9     //from FLY sky controler
+
+int ch1value;
+int ch2value;
+int ch4value;     // var for calculation 
+double m, result;
+bool T;
+int readChannel(int channelInput, int minLimit, int maxLimit, int defaultValue) {
+  int ch = pulseIn(channelInput, HIGH, 30000);
+  if (ch < 100) return defaultValue;
+  return map(ch, 1000, 2000, minLimit, maxLimit);                        // function to read the channel from FS            //????????????????????????????
+}
+                  //
+
+void setup() {               //void setup 
+  pinMode(pwm1,OUTPUT);
+  pinMode(dir1,OUTPUT);
+  pinMode(pwm2,OUTPUT);
+  pinMode(dir2,OUTPUT);      //motor driver 
+  pinMode(CH1, INPUT);       //from FS ch1
+  pinMode(CH2, INPUT);       //from FS ch2 
+  Serial.begin(115200);
+}
+
+
+void loop() {
+ch1value = readChannel(CH1, -255, 255, 0);
+//Serial.println(ch1value);
+ch2value = readChannel(CH2, -255, 255, 0);
+//Serial.println(ch2value);
+ch4value = readChannel(CH4, -255, 255, 0);
+//Serial.println(ch4value);
+delay(50);
+
+   if ((ch1value < 25 && ch1value > -25)&&(ch2value < 25 && ch2value > -25))            //condition for no motion/stop
+  { 
+    analogWrite(pwm1,0);
+    analogWrite(pwm2,0);
+    Serial.println("HALT");
+    T=false;
+   }
+else if(ch1value != 0){                   //??????????((ch1value > 25 && ch1value < -25)&&(ch2value > 25 && ch2value < -25))
+    m=ch2value/ch1value;
+    T=true;
+    }
+   else 
+   {
+    T=true;
+    } 
+
+if (T==true){
+  if (ch1value>0){
+    result = atan(m)*180/3.1415;
+  }
+  else if (ch1value<0){
+     result = (atan(m)*180/3.1415)+180;  
+  }
+  else if(ch1value==0){
+    if (ch2value>0){
+      result=90;
+    }
+    else if (ch2value<0){
+      result=270;
+    }
+  }
+Serial.println(result);
+}
+
+ if ((ch1value < 25 && ch1value > -25)&&(ch2value < 25 && ch2value > -25))            //condition for no motion/stop
+  { 
+    analogWrite(pwm1,0);
+    analogWrite(pwm2,0);
+    Serial.println("HALT");
+  }
+ else if(result==0){
+    Serial.println("Right");
+
+    digitalWrite(dir1,HIGH);
+    analogWrite(pwm1,ch1value);
+  
+    digitalWrite(dir2,HIGH);
+    analogWrite(pwm2,ch1value);
+  
+  }
+else if(171<result && result<190){
+    Serial.println("Left");
+
+    digitalWrite(dir1,1);
+    analogWrite(pwm1,-ch1value);
+  
+    digitalWrite(dir2,1);
+    analogWrite(pwm2,-ch1value);
+
+ }
+ else if(81<result && result<100){
+    Serial.println("Front");
+
+    digitalWrite(dir1,1);
+    analogWrite(pwm1,ch2value);
+  
+    digitalWrite(dir2,1);
+    analogWrite(pwm2,ch2value);
+}
+else if(261<result && result<270){
+    Serial.println("Back");
+
+    digitalWrite(dir1,0);
+    analogWrite(pwm1,-ch2value);
+  
+    digitalWrite(dir2,0);
+    analogWrite(pwm2,-ch2value);
+}
+
+else if(41<result && result<50){
+    Serial.println("Right+40");
+
+    digitalWrite(dir1,1);
+    analogWrite(pwm1,ch2value);
+  
+    digitalWrite(dir2,1);
+    analogWrite(pwm2,ch2value-100);
+   }
+else if(130<result && result<140){
+    Serial.println("Left-40");
+
+    digitalWrite(dir1,0);
+    analogWrite(pwm1,ch2value-100);
+  
+    digitalWrite(dir2,0);
+    analogWrite(pwm2,ch2value);
+
+ }
+else if(221<result && result<230){
+    Serial.println("Left-40");
+
+    digitalWrite(dir1,0);
+    analogWrite(pwm1,ch2value-100);
+  
+    digitalWrite(dir2,0);
+    analogWrite(pwm2,ch2value);
+
+ }
+ else if(-50<result && result<-40){
+    Serial.println("right-40");
+
+    digitalWrite(dir1,0);
+    analogWrite(pwm1,ch2value);
+  
+    digitalWrite(dir2,0);
+    analogWrite(pwm2,ch2value-100);
+
+ }
+if(ch4value>25||ch4value<-25)
+{
+ if ((ch4value < 25 && ch4value > -25))
+  { 
+    analogWrite(pwm1,0);
+    analogWrite(pwm2,0);
+    T=false;
+   }
+
+else if (ch4value>25)
+{
+  Serial.println("Immediate Right");
+  digitalWrite(dir1,1);
+  analogWrite(pwm1,ch4value);
+  digitalWrite(dir2,0);
+  analogWrite(pwm2,ch4value);
+}
+else if (ch4value<-25)
+{
+  Serial.println("Immediate Left");
+  digitalWrite(dir1,0);
+  analogWrite(pwm1,-ch4value);
+  digitalWrite(dir2,1);
+  analogWrite(pwm2,-ch4value);
+}
+}
+
+}
